@@ -335,12 +335,14 @@ def create_spk_dependency_tree(kernels):
     dep_tree = nx.DiGraph()
 
     for kernel in kernels:
+        print(kernel)
         brief = subprocess.run(["brief", "-c {}".format(kernel)],
                                capture_output=True,
                                check=True,
                                text=True)
-        for body, rel_body in re.findall(r'\((.*)\).*w\.r\.t\..*\((.*)\)', brief.stdout):
-            dep_tree.add_edge(int(body), int(rel_body), kernel=kernel)
+
+        for body, rel_body in re.findall(r'([^()].\d+.*).w.r.t..+(..\d+)', brief.stdout):
+            dep_tree.add_edge(int(body.strip('( )')), int(rel_body.strip('( )')), kernel=kernel)
 
     return dep_tree
 
@@ -378,6 +380,8 @@ def spkmerge_config_string(dep_tree, output_spk, bodies, lsk, start, stop):
     for body in bodies:
         # Everything is ultimately defined relative to
         # SOLAR SYSTEM BARYCENTER (0) so find the path to it
+        print('DEP: ', dep_tree.nodes())
+        print('BOD: ', body)
         dep_path = shortest_path(dep_tree, body, 0)
         all_bodies.update(dep_path)
         for i in range(len(dep_path) - 1):
@@ -487,4 +491,3 @@ def query_kernel_pool(matchstr="*"):
 
     svals = [duckpool(v) for v in svars]
     return dict(zip(svars, svals))
-
