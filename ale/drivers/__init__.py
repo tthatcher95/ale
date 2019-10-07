@@ -68,7 +68,11 @@ def load(label, props={}, formatter='usgscsm', verbose=False):
             res.instrument_id
 
             with res as driver:
-                return formatter(driver)
+                isd = formatter(driver)
+                if verbose:
+                    print("Success with: ", driver)
+                    print("ISD:\n", json.dumps(isd, indent=2, cls=AleJsonEncoder))
+                return isd
         except Exception as e:
             if verbose:
                 print(f'Failed: {e}\n')

@@ -4,6 +4,7 @@ import pvl
 import numpy as np
 from ale.base.data_isis import IsisSpice
 
+from conftest import get_image_label
 
 testlabel = """
 Object = IsisCube
@@ -553,7 +554,7 @@ def test_ephemeris_start_time(testdata):
    assert testdata.ephemeris_start_time == 2
 
 
-def test_isis_naif_keywords(testdata):
+def test_naif_keywords(testdata):
 
     naif_keywords =   pvl.loads("""Object = NaifKeywords
                         BODY499_RADII                            = (3396.19, 3396.19, 3376.2)
@@ -567,7 +568,7 @@ def test_isis_naif_keywords(testdata):
                         INS-74699_OD_K                           = (-0.0048509, 2.41312e-07, -1.62369e-13)
                         END_OBJECT
                         END""")['NaifKeywords']
-    assert testdata.isis_naif_keywords == naif_keywords
+    assert testdata.naif_keywords == naif_keywords
 
 
 def test_odtk(testdata):
@@ -636,8 +637,8 @@ def test_sun_position_cache(testdata):
     sun_pos, sun_vel, sun_times = testdata.sun_position
     np.testing.assert_almost_equal(sun_pos, [[1000, 0, 0], [0, 0, 1000]])
     np.testing.assert_almost_equal(sun_vel,
-                                   [[-1000, 2000*np.pi*np.sqrt(3)/9, -2000*np.pi*np.sqrt(3)/9],
-                                    [2000*np.pi*np.sqrt(3)/9, -2000*np.pi*np.sqrt(3)/9, -1000]])
+                                   [[-1000, -2000*np.pi*np.sqrt(3)/9, 2000*np.pi*np.sqrt(3)/9],
+                                    [-2000*np.pi*np.sqrt(3)/9, 2000*np.pi*np.sqrt(3)/9, -1000]])
     np.testing.assert_equal(sun_times, [0, 1])
 
 def test_sun_position_polynomial(testdata):
@@ -666,8 +667,8 @@ def test_sun_position_polynomial(testdata):
     sun_pos, sun_vel, sun_times = testdata.sun_position
     np.testing.assert_almost_equal(sun_pos, [[1000, 0, 0], [-1000, 0, 1000]])
     np.testing.assert_almost_equal(sun_vel,
-                                   [[-500, 500 + 1000*np.pi*np.sqrt(3)/9, -500 - 1000*np.pi*np.sqrt(3)/9],
-                                    [-500 + 1000*np.pi*np.sqrt(3)/9, -500 - 2000*np.pi*np.sqrt(3)/9, 500 + 1000*np.pi*np.sqrt(3)/9]])
+                                   [[-500, 500 - 1000*np.pi*np.sqrt(3)/9, -500 + 1000*np.pi*np.sqrt(3)/9],
+                                    [-500 - 1000*np.pi*np.sqrt(3)/9, -500 + 2000*np.pi*np.sqrt(3)/9, 500 - 1000*np.pi*np.sqrt(3)/9]])
     np.testing.assert_equal(sun_times, [2, 4])
 
 def test_inst_position_cache(testdata):
@@ -696,6 +697,20 @@ def test_inst_position_cache(testdata):
     sensor_pos, sensor_vel, sensor_times = testdata.sensor_position
     np.testing.assert_almost_equal(sensor_pos, [[1000, 0, 0], [0, 0, 1000]])
     np.testing.assert_almost_equal(sensor_vel,
-                                   [[-1000, 2000*np.pi*np.sqrt(3)/9, -2000*np.pi*np.sqrt(3)/9],
-                                    [2000*np.pi*np.sqrt(3)/9, -2000*np.pi*np.sqrt(3)/9, -1000]])
+                                   [[-1000, -2000*np.pi*np.sqrt(3)/9, 2000*np.pi*np.sqrt(3)/9],
+                                    [-2000*np.pi*np.sqrt(3)/9, 2000*np.pi*np.sqrt(3)/9, -1000]])
     np.testing.assert_equal(sensor_times, [0, 1])
+
+def test_no_tables():
+    test_file = get_image_label('B10_013341_1010_XN_79S172W')
+    test_mix_in = IsisSpice()
+    test_mix_in._file = test_file
+    test_mix_in.label = pvl.load(test_file)
+    with pytest.raises(ValueError):
+        test_mix_in.inst_pointing_table
+    with pytest.raises(ValueError):
+        test_mix_in.body_orientation_table
+    with pytest.raises(ValueError):
+        test_mix_in.inst_position_table
+    with pytest.raises(ValueError):
+        test_mix_in.sun_position_table

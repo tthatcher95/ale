@@ -204,6 +204,8 @@ class IsisSpice():
                 if table['Name'] == 'InstrumentPointing':
                     binary_data = read_table_data(table, self._file)
                     self._inst_pointing_table = parse_table(table, binary_data)
+                    return self._inst_pointing_table
+            raise ValueError(f'Could not find InstrumentPointing table on file {self._file}')
         return self._inst_pointing_table
 
     @property
@@ -222,6 +224,8 @@ class IsisSpice():
                 if table['Name'] == 'BodyRotation':
                     binary_data = read_table_data(table, self._file)
                     self._body_orientation_table = parse_table(table, binary_data)
+                    return self._body_orientation_table
+            raise ValueError(f'Could not find BodyRotation table on file {self._file}')
         return self._body_orientation_table
 
     @property
@@ -240,6 +244,8 @@ class IsisSpice():
                 if table['Name'] == 'InstrumentPosition':
                     binary_data = read_table_data(table, self._file)
                     self._inst_position_table = parse_table(table, binary_data)
+                    return self._inst_position_table
+            raise ValueError(f'Could not find InstrumentPosition table on file {self._file}')
         return self._inst_position_table
 
     @property
@@ -258,6 +264,8 @@ class IsisSpice():
                 if table['Name'] == 'SunPosition':
                     binary_data = read_table_data(table, self._file)
                     self._sun_position_table = parse_table(table, binary_data)
+                    return self._sun_position_table
+            raise ValueError(f'Could not find SunPosition table on file {self._file}')
         return self._sun_position_table
 
     def __enter__(self):
@@ -281,7 +289,7 @@ class IsisSpice():
         """
         The hex encoded image start time computed from the
         spacecraft clock count
-        Expects isis_naif_keywords to be defined. This should be a dict containing
+        Expects naif_keywords to be defined. This should be a dict containing
         Naif keyworkds from the label.
 
         Returns
@@ -291,7 +299,7 @@ class IsisSpice():
             start time as a double
         """
         regex = re.compile('CLOCK_ET_.*_COMPUTED')
-        for key in self.isis_naif_keywords:
+        for key in self.naif_keywords:
             if re.match(regex, key[0]):
                 # If the hex string is only numbers and contains leading 0s,
                 # the PVL library strips them off (ie. 0000000000002040 becomes
@@ -325,7 +333,7 @@ class IsisSpice():
         list :
             The center of the CCD formatted as line, sample
         """
-        return self.isis_naif_keywords.get('INS{}_BORESIGHT_SAMPLE'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_BORESIGHT_SAMPLE'.format(self.ikid), None)
 
     @property
     def detector_center_line(self):
@@ -339,7 +347,7 @@ class IsisSpice():
         list :
             The center of the CCD formatted as line, sample
         """
-        return self.isis_naif_keywords.get('INS{}_BORESIGHT_LINE'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_BORESIGHT_LINE'.format(self.ikid), None)
 
 
     @property
@@ -394,7 +402,7 @@ class IsisSpice():
         """
         The line component of the affine transformation
         from focal plane coordinates to centered ccd pixels
-        Expects isis_naif_keywords to be defined. This should be a dict containing
+        Expects naif_keywords to be defined. This should be a dict containing
         Naif keyworkds from the label.
         Expects ikid to be defined. This should be the integer Naif ID code
         for the instrument.
@@ -405,14 +413,14 @@ class IsisSpice():
             The coefficients of the affine transformation
             formatted as constant, x, y
         """
-        return self.isis_naif_keywords.get('INS{}_ITRANSL'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_ITRANSL'.format(self.ikid), None)
 
     @property
     def focal2pixel_samples(self):
         """
         The sample component of the affine transformation
         from focal plane coordinates to centered ccd pixels
-        Expects isis_naif_keywords to be defined. This should be a dict containing
+        Expects naif_keywords to be defined. This should be a dict containing
         Naif keyworkds from the label.
         Expects ikid to be defined. This should be the integer Naif ID code
         for the instrument.
@@ -423,7 +431,7 @@ class IsisSpice():
             The coefficients of the affine transformation
             formatted as constant, x, y
         """
-        return self.isis_naif_keywords.get('INS{}_ITRANSS'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_ITRANSS'.format(self.ikid), None)
 
     @property
     def pixel2focal_x(self):
@@ -436,7 +444,7 @@ class IsisSpice():
         detector to focal plane x
         """
 
-        return self.isis_naif_keywords.get('INS{}_TRANSX'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_TRANSX'.format(self.ikid), None)
 
     @property
     def pixel2focal_y(self):
@@ -449,13 +457,13 @@ class IsisSpice():
         detector to focal plane y
         """
 
-        return self.isis_naif_keywords.get('INS{}_TRANSY'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_TRANSY'.format(self.ikid), None)
 
     @property
     def focal_length(self):
         """
         The focal length of the instrument
-        Expects isis_naif_keywords to be defined. This should be a dict containing
+        Expects naif_keywords to be defined. This should be a dict containing
         Naif keyworkds from the label.
         Expects ikid to be defined. This should be the integer Naif ID code
         for the instrument.
@@ -465,13 +473,13 @@ class IsisSpice():
         float :
             The focal length in millimeters
         """
-        return self.isis_naif_keywords.get('INS{}_FOCAL_LENGTH'.format(self.ikid), None)
+        return self.naif_keywords.get('INS{}_FOCAL_LENGTH'.format(self.ikid), None)
 
     @property
     def target_body_radii(self):
         """
         The triaxial radii of the target body
-        Expects isis_naif_keywords to be defined. This should be a dict containing
+        Expects naif_keywords to be defined. This should be a dict containing
         Naif keyworkds from the label.
 
         Returns
@@ -482,9 +490,9 @@ class IsisSpice():
             semiminor
         """
         regex = re.compile(r'BODY-?\d*_RADII')
-        for key in self.isis_naif_keywords:
+        for key in self.naif_keywords:
             if re.match(regex, key[0]):
-                return self.isis_naif_keywords[key[0]]
+                return self.naif_keywords[key[0]]
 
     @property
     def frame_chain(self):
@@ -547,7 +555,7 @@ class IsisSpice():
 
 
     @property
-    def isis_naif_keywords(self):
+    def naif_keywords(self):
         """
         The NaifKeywords group from the file label that
         contains stored values from the original SPICE
@@ -574,7 +582,7 @@ class IsisSpice():
         : list
           optical distortion coefficients
         """
-        return self.isis_naif_keywords["INS{}_OD_K".format(self.ikid)]
+        return self.naif_keywords["INS{}_OD_K".format(self.ikid)]
 
     @property
     def sensor_frame_id(self):
